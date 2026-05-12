@@ -1,0 +1,5 @@
+source/
+logs/
+jars/
+**/__pycache__/
+*.pyc
