@@ -151,30 +151,17 @@ silver_path = "hdfs://namenode:9000/data/silver/silver_credits"
 
 log.info("Parquet silver ecrit : {}".format(silver_path))
 
-# ============================================================
-# CREATION TABLE HIVE via spark.sql()
-# ============================================================
-log.info("Creation table Hive...")
+# CREATION TABLE HIVE INTERNE via saveAsTable
+log.info("Creation table Hive interne via saveAsTable...")
 
-spark.sql("CREATE DATABASE IF NOT EXISTS default")
-spark.sql("DROP TABLE IF EXISTS default.silver_credits")
-spark.sql(
-    "CREATE EXTERNAL TABLE default.silver_credits "
-    "(SK_ID_CURR INT, TARGET INT, AMT_CREDIT DOUBLE, "
-    "AMT_INCOME_TOTAL DOUBLE, NAME_CONTRACT_TYPE STRING, "
-    "CODE_GENDER STRING, nb_credits_externes BIGINT, "
-    "total_days_credit BIGINT, avg_payment DOUBLE, "
-    "nb_paiements BIGINT, rank_credit_region INT) "
-    "PARTITIONED BY (year INT, month INT, day INT) "
-    "STORED AS PARQUET "
-    "LOCATION '" + silver_path + "'"
+silver_hive = spark.read.parquet(silver_path)
+
+(
+    silver_hive
+    .write
+    .mode("overwrite")
+    .format("parquet")
+    .saveAsTable("default.silver_credits")
 )
-spark.sql("MSCK REPAIR TABLE default.silver_credits")
-log.info("Table Hive default.silver_credits creee")
 
-silver.unpersist()
-app.unpersist()
-bureau.unpersist()
-
-log.info("Processor termine avec succes")
-spark.stop()
+log.info("Table Hive default.silver_credits creee avec succes")
