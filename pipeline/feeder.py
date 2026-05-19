@@ -75,6 +75,8 @@ for filename in csv_files:
 
         df2.cache()
 
+        df2.show(5)
+
         r = df2.count()
         log.info("Nombre de lignes {} : {}".format(filename, r))
 
