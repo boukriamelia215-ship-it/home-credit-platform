@@ -49,6 +49,13 @@ def login():
         return jsonify(access_token=token), 200
     log.error("Login echoue pour {}".format(username))
     return jsonify({"error": "Identifiants incorrects"}), 401
+# ============================================================
+# HEALTH CHECK
+# ============================================================
+@app.route("/health", methods=["GET"])
+def health():
+    log.info("GET /health")
+    return jsonify({"status": "ok", "service": "Home Credit API"}), 200
 
 # ============================================================
 # ENDPOINT 1 - Datamart Marketing
