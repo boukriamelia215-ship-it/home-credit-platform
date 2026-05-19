@@ -213,7 +213,7 @@ services:
     working_dir: /app
     command: >
       bash -c "pip install streamlit plotly pandas
-      psycopg2-binary pymysql sqlalchemy --quiet &&
+      psycopg2-binary pymysql sqlalchemy cryptography --quiet &&
       streamlit run dashboard.py
       --server.port 8501 --server.address 0.0.0.0"
     depends_on:
