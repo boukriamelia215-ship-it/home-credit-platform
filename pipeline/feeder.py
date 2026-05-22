@@ -6,9 +6,12 @@ from datetime import date
 from pyspark.sql import SparkSession, functions as F
 
 # ARGUMENTS
-parser = argparse.ArgumentParser(description="Feeder - Ingestion CSV vers HDFS")
+parser = argparse.ArgumentParser(description="Feeder - Ingestion vers HDFS")
 parser.add_argument("--source-dir", required=True, help="Dossier source des CSV")
 parser.add_argument("--output-dir", required=True, help="Dossier de sortie HDFS")
+parser.add_argument("--pg-url",     required=True, help="URL PostgreSQL JDBC")
+parser.add_argument("--pg-user",    required=True, help="User PostgreSQL")
+parser.add_argument("--pg-pass",    required=True, help="Password PostgreSQL")
 parser.add_argument("--log-dir",    required=True, help="Dossier des logs")
 args = parser.parse_args()
 
@@ -29,6 +32,7 @@ log = logging.getLogger("feeder")
 spark = (
     SparkSession.builder
     .appName("feeder")
+    .config("spark.jars", "/opt/jars/postgresql-42.2.18.jar")
     .getOrCreate()
 )
 log.info("SparkSession demarree")
@@ -40,9 +44,56 @@ month = today.month
 day   = today.day
 log.info("Date ingestion : {}/{}/{}".format(year, month, day))
 
-# FICHIERS CSV
+# SOURCE 1 — PostgreSQL (application_train)
+log.info("Lecture source 1 : application_train depuis PostgreSQL...")
+
+df_pg = (
+    spark.read
+    .format("jdbc")
+    .option("url", args.pg_url)
+    .option("driver", "org.postgresql.Driver")
+    .option("dbtable", "application_train")
+    .option("user", args.pg_user)
+    .option("password", args.pg_pass)
+    .option("partitionColumn", "SK_ID_CURR")
+    .option("lowerBound", "100002")
+    .option("upperBound", "456255")
+    .option("numPartitions", "8")
+    .load()
+)
+
+today = date.today()
+df_pg2 = (
+    df_pg
+    .withColumn("year",  F.lit(today.year))
+    .withColumn("month", F.lit(today.month))
+    .withColumn("day",   F.lit(today.day))
+)
+
+df_pg2.cache()
+df_pg2.show(5)
+
+r = df_pg2.count()
+log.info("Nombre de lignes application_train (PostgreSQL) : {}".format(r))
+
+output_path = "{}/application_train".format(args.output_dir)
+(
+    df_pg2.repartition(4)
+    .write
+    .mode("overwrite")
+    .partitionBy("year", "month", "day")
+    .parquet(output_path)
+)
+
+log.info("application_train ecrit depuis PostgreSQL dans {}".format(output_path))
+df_pg2.unpersist()
+
+# ============================================================
+# SOURCE 2 — CSV (6 autres fichiers)
+# ============================================================
+log.info("Lecture source 2 : fichiers CSV...")
+
 csv_files = [
-    "application_train",
     "bureau",
     "bureau_balance",
     "credit_card_balance",
@@ -51,7 +102,6 @@ csv_files = [
     "previous_application"
 ]
 
-# INGESTION
 for filename in csv_files:
     input_path  = "file://{}/{}.csv".format(args.source_dir, filename)
     output_path = "{}/{}".format(args.output_dir, filename)
@@ -74,7 +124,6 @@ for filename in csv_files:
         )
 
         df2.cache()
-
         df2.show(5)
 
         r = df2.count()
