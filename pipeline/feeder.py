@@ -76,6 +76,7 @@ df_pg2.show(5)
 r = df_pg2.count()
 log.info("Nombre de lignes application_train (PostgreSQL) : {}".format(r))
 
+
 output_path = "{}/application_train".format(args.output_dir)
 (
     df_pg2.repartition(4)

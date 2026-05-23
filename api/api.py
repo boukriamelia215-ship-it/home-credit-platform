@@ -70,7 +70,7 @@ def get_marketing():
         result = conn.execute(text(
             "SELECT * FROM dm_marketing LIMIT :size OFFSET :offset"
         ), {"size": size, "offset": offset})
-        rows = [dict(row) for row in result]
+        rows = [dict(zip(result.keys(), row)) for row in result]
     log.info("GET /api/marketing page={}".format(page))
     return jsonify({"page": page, "size": size, "data": rows}), 200
 
@@ -87,7 +87,7 @@ def get_risque():
         result = conn.execute(text(
             "SELECT * FROM dm_risque LIMIT :size OFFSET :offset"
         ), {"size": size, "offset": offset})
-        rows = [dict(row) for row in result]
+        rows = [dict(zip(result.keys(), row)) for row in result]
     log.info("GET /api/risque page={}".format(page))
     return jsonify({"page": page, "size": size, "data": rows}), 200
 
@@ -104,7 +104,7 @@ def get_bi():
         result = conn.execute(text(
             "SELECT * FROM dm_bi LIMIT :size OFFSET :offset"
         ), {"size": size, "offset": offset})
-        rows = [dict(row) for row in result]
+        rows = [dict(zip(result.keys(), row)) for row in result]
     log.info("GET /api/bi page={}".format(page))
     return jsonify({"page": page, "size": size, "data": rows}), 200
 
