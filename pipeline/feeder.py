@@ -88,9 +88,8 @@ output_path = "{}/application_train".format(args.output_dir)
 log.info("application_train ecrit depuis PostgreSQL dans {}".format(output_path))
 df_pg2.unpersist()
 
-# ============================================================
 # SOURCE 2 — CSV (6 autres fichiers)
-# ============================================================
+# Ecriture dans HDFS Bronze 
 log.info("Lecture source 2 : fichiers CSV...")
 
 csv_files = [
